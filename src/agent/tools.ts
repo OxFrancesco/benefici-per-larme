@@ -89,7 +89,7 @@ export function createScoutTools({ backend, contextDevKey, runId, spend }: ToolD
       corps: arr(oneOf([...CORPS]), {
         minItems: 1,
         description:
-          "Every force or specialty the page says it covers. Use ['tutti'] when it is open to all Forze Armate or all Difesa personnel. Use a specialty such as 'alpini' or 'lagunari' only when the benefit is reserved to it",
+          "Every armed force the page says it covers. Use ['tutti'] when it is open to all Forze Armate or all Difesa personnel. An Esercito agreement covers every unit in it, so use 'esercito' for the Alpini, Lagunari and the rest",
       }),
       value: opt(
         str({

@@ -5,7 +5,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { isAdmin } from "./admin.ts";
 import type { CatalogueView } from "./agent/rpc.ts";
 import type Backend from "./backend/api.ts";
-import type { Question, Run } from "./domain.ts";
+import { type Question, type Run, forEsercito } from "./domain.ts";
 import { env } from "./env.ts";
 
 const backend = () => toRpcAsync<Backend>(env.BACKEND);
@@ -35,7 +35,8 @@ async function callAgent(path: string, token: string | null, body?: unknown): Pr
 /** The catalogue is public. Bookmarks, questions and the admin link are added for a signed-in person. */
 export const getDashboard = createServerFn({ method: "GET" }).handler(async () => {
   const session = await auth();
-  const [benefits, runs] = await Promise.all([backend().listBenefits(), backend().listRuns()]);
+  const [all, runs] = await Promise.all([backend().listBenefits(), backend().listRuns()]);
+  const benefits = forEsercito(all);
   const updatedAt = runs.find((run) => run.status === "completed")?.finishedAt ?? null;
   if (!session.isAuthenticated) {
     return { benefits, updatedAt, signedIn: false, admin: false, bookmarks: [], questions: [], remaining: 0 };

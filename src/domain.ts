@@ -17,28 +17,16 @@ export const Category = Schema.Literals(CATEGORIES);
 export type Category = typeof Category.Type;
 
 /**
- * Who a benefit applies to. `tutti` is every armed force. A specialty belongs to a force through `SPECIALTY_OF`,
- * so someone in the Alpini also sees what is open to the whole Esercito.
+ * Which armed forces a benefit applies to. `tutti` is every force. Units such as the Alpini or the Lagunari are not
+ * listed: an agreement for the Esercito covers every unit in it.
  */
-export const CORPS = [
-  "tutti",
-  "esercito",
-  "marina",
-  "aeronautica",
-  "carabinieri",
-  "alpini",
-  "bersaglieri",
-  "paracadutisti",
-  "lagunari",
-  "granatieri",
-  "genio",
-  "san-marco",
-] as const;
+export const CORPS = ["tutti", "esercito", "marina", "aeronautica", "carabinieri"] as const;
 
 export const Corps = Schema.Literals(CORPS);
 export type Corps = typeof Corps.Type;
 
-export const SPECIALTY_OF: Partial<Record<Corps, Corps>> = {
+/** Older entries named a unit. Each one counts as its force. */
+export const LEGACY_UNITS: Record<string, Corps> = {
   alpini: "esercito",
   bersaglieri: "esercito",
   paracadutisti: "esercito",
@@ -49,8 +37,11 @@ export const SPECIALTY_OF: Partial<Record<Corps, Corps>> = {
 };
 
 /** True when a benefit open to `open` is available to someone serving in `mine`. */
-export const appliesTo = (open: readonly Corps[], mine: Corps) =>
-  open.includes("tutti") || open.includes(mine) || (SPECIALTY_OF[mine] !== undefined && open.includes(SPECIALTY_OF[mine]));
+export const appliesTo = (open: readonly Corps[], mine: Corps) => open.includes("tutti") || open.includes(mine);
+
+/** The catalogue is for the Esercito: what is open to it or to every force. */
+export const forEsercito = <T extends { readonly corps: readonly Corps[] }>(benefits: readonly T[]) =>
+  benefits.filter((benefit) => appliesTo(benefit.corps, "esercito"));
 
 export const BenefitDraft = Schema.Struct({
   title: Schema.String,

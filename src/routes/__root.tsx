@@ -15,8 +15,8 @@ export const Route = createRootRoute({
       { name: "theme-color", content: "#000000" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black" },
-      { name: "apple-mobile-web-app-title", content: "Benefici per l'Arme" },
-      { title: "Benefici per l'Arme" },
+      { name: "apple-mobile-web-app-title", content: "Benefici Esercito Italiano" },
+      { title: "Benefici Esercito Italiano" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

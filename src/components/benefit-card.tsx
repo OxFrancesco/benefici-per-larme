@@ -1,5 +1,5 @@
 import type { Benefit } from "../domain.ts";
-import { CATEGORY_LABELS, CORPS_LABELS } from "../labels.ts";
+import { CATEGORY_LABELS } from "../labels.ts";
 import { BookmarkToggle } from "./bookmark-toggle.tsx";
 import { ShareButton } from "./share-button.tsx";
 
@@ -40,7 +40,6 @@ export function BenefitCard({
         <span className="text-foreground">{benefit.provider}</span>
         <span>{CATEGORY_LABELS[benefit.category]}</span>
         <span>{benefit.region}</span>
-        <span>{benefit.corps.map((id) => CORPS_LABELS[id]).join(", ")}</span>
       </div>
     </article>
   );

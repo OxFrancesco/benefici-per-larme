@@ -10,6 +10,7 @@ import {
   CORPS,
   type Corps,
   type EndedBenefit,
+  LEGACY_UNITS,
   MONTHLY_QUESTIONS,
   type Question,
   type Run,
@@ -49,7 +50,11 @@ interface RunRow {
 const parseCorps = (stored: string): Corps[] => {
   const known: readonly string[] = CORPS;
   const parsed: unknown = JSON.parse(stored);
-  return Array.isArray(parsed) ? parsed.filter((id): id is Corps => typeof id === "string" && known.includes(id)) : [];
+  if (!Array.isArray(parsed)) return [];
+  const forces = parsed.flatMap((id): Corps[] =>
+    typeof id !== "string" ? [] : known.includes(id) ? [id as Corps] : id in LEGACY_UNITS ? [LEGACY_UNITS[id]] : [],
+  );
+  return [...new Set(forces)];
 };
 
 const toBenefit = (row: BenefitRow): Benefit => ({

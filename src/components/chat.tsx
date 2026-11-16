@@ -22,7 +22,7 @@ let bridge: ReturnType<typeof createAgent> | undefined;
 
 /**
  * Clears the catalogue's filters through ui-sdk's agent bridge, which finds each control by its name, so an older
- * filter cannot hide the benefits an answer points at. The reparto stays: it says who the person is.
+ * filter cannot hide the benefits an answer points at.
  */
 async function clearCatalogueFilters() {
   bridge ??= createAgent();

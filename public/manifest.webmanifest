@@ -1,7 +1,7 @@
 {
-  "name": "Benefici per l'Arme",
+  "name": "Benefici Esercito Italiano",
   "short_name": "Benefici",
-  "description": "Benefit, sconti e convenzioni per il personale delle Forze Armate italiane.",
+  "description": "Benefit, sconti e convenzioni per il personale dell'Esercito Italiano.",
   "lang": "it",
   "start_url": "/",
   "scope": "/",

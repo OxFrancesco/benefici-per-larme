@@ -15,6 +15,12 @@ export const BookmarkIcon = ({ filled }: { filled: boolean }) => (
   </svg>
 );
 
+export const MapIcon = () => (
+  <svg {...base}>
+    <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15" />
+  </svg>
+);
+
 export const CloseIcon = () => (
   <svg {...base}>
     <path d="M18 6 6 18M6 6l12 12" />

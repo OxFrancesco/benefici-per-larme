@@ -19,13 +19,6 @@ export const CORPS_LABELS: Record<Corps, string> = {
   marina: "Marina Militare",
   aeronautica: "Aeronautica Militare",
   carabinieri: "Carabinieri",
-  alpini: "Alpini",
-  bersaglieri: "Bersaglieri",
-  paracadutisti: "Paracadutisti",
-  lagunari: "Lagunari",
-  granatieri: "Granatieri",
-  genio: "Genio",
-  "san-marco": "Brigata San Marco",
 };
 
 export const EVENT_LABELS: Record<RunEventKind, string> = {

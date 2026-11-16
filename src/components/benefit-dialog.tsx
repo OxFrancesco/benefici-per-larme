@@ -60,7 +60,7 @@ export function BenefitDialog({
               </div>
               <dl className="flex flex-col gap-4 border-t border-border pt-5 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-10">
                 <Detail label="A chi spetta">{shown.audience}</Detail>
-                <Detail label="Reparto">{shown.corps.map((id) => CORPS_LABELS[id]).join(", ")}</Detail>
+                <Detail label="Valido per">{shown.corps.map((id) => CORPS_LABELS[id]).join(", ")}</Detail>
                 <Detail label="Offerto da">{shown.provider}</Detail>
                 <Detail label="Dove vale">{shown.region}</Detail>
                 <Detail label="Categoria">{CATEGORY_LABELS[shown.category]}</Detail>

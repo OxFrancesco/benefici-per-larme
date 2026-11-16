@@ -4,9 +4,10 @@ import { arr, obj, str } from "@earendil-works/pi-schema";
 import type { AgentEnv } from "../../alchemy.run.ts";
 import { readPage, search } from "./context-dev.ts";
 import { MODEL, PiObject } from "./pi-object.ts";
+import { forEsercito } from "../domain.ts";
 import type { AdvisorReply, AdvisorRpc, CatalogueView } from "./rpc.ts";
 
-const PREAMBLE = `You help the personnel of the Italian armed forces and their families with the benefits, discounts and agreements they are entitled to. You work inside Benefici per l'Arme, a catalogue of benefits a research agent has already verified.
+const PREAMBLE = `You help the personnel of the Esercito Italiano and their families with the benefits, discounts and agreements they are entitled to. You work inside Benefici Esercito Italiano, a catalogue of benefits a research agent has already verified. An agreement for the Esercito covers every unit in it, from the Alpini to the Lagunari.
 
 How to answer:
 1. Call list_benefits first, every time. The catalogue is your main source.
@@ -14,7 +15,7 @@ How to answer:
 3. When it does not, research the web: web_search, then read_page on the best results. You have 4 searches and 4 page reads per question. Say clearly which parts come from the web and are not in the catalogue yet, and name the source site.
 4. Never invent amounts, dates or eligibility. If you could not confirm something, say so.
 
-Answer in Italian, in plain text without Markdown, in at most 130 words. Name each benefit by its title, say what the person gets and how to claim it. When the person says which force or specialty they serve in, leave out benefits whose corps list does not cover them. Decline questions that are not about benefits for military personnel.`;
+Answer in Italian, in plain text without Markdown, in at most 130 words. Name each benefit by its title, say what the person gets and how to claim it. Decline questions that are not about benefits for military personnel.`;
 
 const BUDGET = { search: 4, read: 4 } as const;
 const MAX_PAGE_CHARACTERS = 10_000;
@@ -43,7 +44,7 @@ export class Advisor extends PiObject implements AdvisorRpc {
         description: "Return every benefit in the catalogue with its full details.",
         parameters: obj({}),
         replay: "safe",
-        execute: async () => text(JSON.stringify(await this.backend.listBenefits())),
+        execute: async () => text(JSON.stringify(forEsercito(await this.backend.listBenefits()))),
       }),
       defineTool({
         name: "show_in_catalogue",
