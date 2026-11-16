@@ -1,13 +1,12 @@
 import { BACKGROUND_CONTEXT } from "@earendil-works/chord/context";
 import { AssistantEntry, defineTool } from "@earendil-works/pi-durable";
-import { obj, oneOf, opt, str } from "@earendil-works/pi-schema";
+import { arr, obj, str } from "@earendil-works/pi-schema";
 import type { AgentEnv } from "../../alchemy.run.ts";
-import { CATEGORIES } from "../domain.ts";
 import { readPage, search } from "./context-dev.ts";
 import { MODEL, PiObject } from "./pi-object.ts";
 import type { AdvisorReply, AdvisorRpc, CatalogueView } from "./rpc.ts";
 
-const PREAMBLE = `You help the personnel of the Italian armed forces and their families with the benefits, discounts and agreements they are entitled to. You work inside Benefit Radar, a catalogue of benefits a research agent has already verified.
+const PREAMBLE = `You help the personnel of the Italian armed forces and their families with the benefits, discounts and agreements they are entitled to. You work inside Benefici per l'Arme, a catalogue of benefits a research agent has already verified.
 
 How to answer:
 1. Call list_benefits first, every time. The catalogue is your main source.
@@ -49,17 +48,12 @@ export class Advisor extends PiObject implements AdvisorRpc {
       defineTool({
         name: "show_in_catalogue",
         description:
-          "Filter the catalogue on the person's screen to the benefits your answer is about. Filters you leave out are cleared. Use as few as possible, usually one: a category, or a search word that appears in the titles of the benefits you name. Combine filters only when every benefit you name matches all of them.",
-        parameters: obj({
-          search: opt(str({ description: "Words to search for, e.g. a provider or a benefit name" })),
-          category: opt(oneOf([...CATEGORIES])),
-          region: opt(str({ description: "A region exactly as it appears on a benefit, e.g. 'Nazionale'" })),
-          sort: opt(oneOf(["recenti", "regione", "nome", "ente"])),
-        }),
+          "Show the person exactly the catalogue benefits your answer names, on their screen. Pass the id of each one, as returned by list_benefits.",
+        parameters: obj({ benefitIds: arr(str(), { minItems: 1 }) }),
         replay: "safe",
         execute: async (args) => {
           this.#view = args;
-          return text("The catalogue on screen now shows that selection.");
+          return text("The catalogue on screen now shows those benefits.");
         },
       }),
       defineTool({

@@ -7,15 +7,13 @@ export interface ScoutRpc {
 }
 
 export interface CatalogueView {
-  readonly search?: string;
-  readonly category?: string;
-  readonly region?: string;
-  readonly sort?: string;
+  /** The benefits an answer is about, by id. */
+  readonly benefitIds: readonly string[];
 }
 
 export interface AdvisorReply {
   readonly answer: string;
-  /** Filters the agent wants the catalogue on screen to show, when the answer points at a part of it. */
+  /** What the catalogue on screen should show, when the answer names benefits from it. */
   readonly view?: CatalogueView;
 }
 

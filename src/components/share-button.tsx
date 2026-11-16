@@ -15,7 +15,8 @@ export function ShareButton({ benefit }: { benefit: Benefit }) {
     const url = benefitUrl(benefit);
     // Phones get the system share sheet. Desktop browsers without one copy the link.
     if (typeof navigator.share === "function") {
-      await navigator.share({ title: benefit.title, text: benefit.summary, url }).catch(() => undefined);
+      // Only the title and the link: apps that receive a text too paste it onto the end of the link and break it.
+      await navigator.share({ title: benefit.title, url }).catch(() => undefined);
       return;
     }
     await navigator.clipboard.writeText(url);

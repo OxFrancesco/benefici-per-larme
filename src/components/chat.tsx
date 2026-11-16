@@ -3,7 +3,6 @@ import { Button } from "@ui-sdk/react/button";
 import { Popover, PopoverClose, PopoverContent, PopoverTitle, PopoverTrigger } from "@ui-sdk/react/popover";
 import { Textarea } from "@ui-sdk/react/textarea";
 import * as React from "react";
-import type { CatalogueView } from "../agent/rpc.ts";
 import type { Question } from "../domain.ts";
 import { askAgent } from "../functions.ts";
 import { ChatIcon, CloseIcon, SendIcon } from "./icons.tsx";
@@ -22,22 +21,19 @@ const FAILURES = {
 let bridge: ReturnType<typeof createAgent> | undefined;
 
 /**
- * Moves the catalogue to what the answer talks about, through ui-sdk's agent bridge, which finds each control by
- * its name. Filters the answer does not mention go back to "all", so an older filter cannot hide the results.
- * The reparto stays: it says who the person is, not what they searched for.
+ * Clears the catalogue's filters through ui-sdk's agent bridge, which finds each control by its name, so an older
+ * filter cannot hide the benefits an answer points at. The reparto stays: it says who the person is.
  */
-async function showInCatalogue(view: CatalogueView) {
+async function clearCatalogueFilters() {
   bridge ??= createAgent();
-  const steps = [
-    { ref: "Vista", action: "setValue", args: ["catalogo"] },
-    { ref: "Cerca nel catalogo", action: "setValue", args: [view.search ?? ""] },
-    { ref: "Categoria", action: "setValue", args: [view.category ?? "tutti"] },
-    { ref: "Regione", action: "setValue", args: ["tutti"] },
-    ...(view.region === undefined ? [] : [{ ref: "Regione", action: "setValue", args: [view.region] }]),
-    ...(view.sort === undefined ? [] : [{ ref: "Ordina per", action: "setValue", args: [view.sort] }]),
-  ];
-  // One step per call: a region the catalogue does not list must not stop the other filters.
-  for (const step of steps) await bridge.act({ steps: [step] });
+  await bridge.act({
+    steps: [
+      { ref: "Vista", action: "setValue", args: ["catalogo"] },
+      { ref: "Cerca nel catalogo", action: "setValue", args: [""] },
+      { ref: "Categoria", action: "setValue", args: ["tutti"] },
+      { ref: "Regione", action: "setValue", args: ["tutti"] },
+    ],
+  });
 }
 
 interface Message {
@@ -55,11 +51,14 @@ const toMessages = (questions: readonly Question[]): Message[] =>
 export function Chat({
   signedIn,
   onSignIn,
+  onShow,
   questions,
   remaining,
 }: {
   signedIn: boolean;
   onSignIn: () => void;
+  /** Narrows the catalogue to the benefits an answer names. */
+  onShow: (benefitIds: readonly string[]) => void;
   questions: readonly Question[];
   remaining: number;
 }) {
@@ -88,7 +87,10 @@ export function Chat({
     ]);
     if (result.ok) {
       setLeft(result.remaining);
-      if (result.view !== undefined) void showInCatalogue(result.view);
+      if (result.view !== undefined) {
+        await clearCatalogueFilters();
+        onShow(result.view.benefitIds);
+      }
     } else if (result.reason === "quota") {
       setLeft(0);
     }
@@ -96,10 +98,8 @@ export function Chat({
 
   return (
     <Popover>
-      <PopoverTrigger
-        data-variant="solid"
-        className="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 h-12 gap-2 px-4 text-base font-bold sm:right-6 sm:bottom-6"
-      >
+      {/* On a phone the trigger is the third item of the bottom bar. On a wide screen it floats bottom right. */}
+      <PopoverTrigger className="fixed right-0 bottom-0 z-30 h-[calc(3.5rem+env(safe-area-inset-bottom)+1px)] w-1/3 flex-col gap-0.5 border-x-0 border-b-0 bg-background px-0 pb-[env(safe-area-inset-bottom)] text-xs font-medium text-muted-foreground data-[open]:text-foreground md:right-6 md:bottom-6 md:z-40 md:h-12 md:w-auto md:flex-row md:gap-2 md:border-0 md:bg-primary md:px-4 md:pb-0 md:text-base md:font-bold md:text-primary-foreground md:data-[open]:text-primary-foreground">
         <ChatIcon />
         Chiedi
       </PopoverTrigger>

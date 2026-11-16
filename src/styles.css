@@ -45,10 +45,6 @@ body {
   font-weight: 700;
 }
 
-[data-slot="segmented-control"] {
-  background: transparent;
-}
-
 [data-slot="segmented-control-indicator"] {
   border-color: var(--ui-primary);
   background: var(--ui-primary);
@@ -60,10 +56,6 @@ body {
 [data-slot="segmented-control-item"][data-checked] {
   color: var(--ui-primary-foreground);
   font-weight: 700;
-}
-
-[data-slot="segmented-control-item"] {
-  height: calc(var(--ui-spacing) * 9);
 }
 
 /* Filters and the chat field are tap targets on a phone. */

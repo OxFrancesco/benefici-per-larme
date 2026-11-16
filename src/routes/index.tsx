@@ -7,6 +7,8 @@ import * as React from "react";
 import { BenefitCard } from "../components/benefit-card.tsx";
 import { BenefitDialog } from "../components/benefit-dialog.tsx";
 import { Chat } from "../components/chat.tsx";
+import { BookmarkIcon, GridIcon } from "../components/icons.tsx";
+import { Logo } from "../components/logo.tsx";
 import { FilterSelect, type Option } from "../components/filter-select.tsx";
 import { type Benefit, CATEGORIES, CORPS, type Corps, appliesTo } from "../domain.ts";
 import { getDashboard, setBookmark } from "../functions.ts";
@@ -59,10 +61,16 @@ function Catalogue() {
   const [region, setRegion] = React.useState(ALL);
   const [sort, setSort] = React.useState<Sort>("recenti");
   const [saved, setSaved] = React.useState(() => new Set(bookmarks));
-  const shared = Route.useSearch().b;
+  // Some apps append the shared text to the link, so only the part before the first space is the id.
+  const shared = Route.useSearch().b?.split(/\s/)[0];
   const [selected, setSelected] = React.useState<Benefit | null>(
     () => benefits.find((benefit) => benefit.id === shared) ?? null,
   );
+  // The address always points at the open benefit, so copying it from the browser shares this exact view.
+  const open = (benefit: Benefit | null) => {
+    setSelected(benefit);
+    window.history.replaceState(null, "", benefit === null ? "/" : `/?b=${encodeURIComponent(benefit.id)}`);
+  };
 
   // The reparto is a personal setting, kept on this device so the catalogue opens on it next time.
   React.useEffect(() => {
@@ -74,8 +82,11 @@ function Catalogue() {
     window.localStorage.setItem(CORPS_KEY, value);
   };
 
-  const filtered = query !== "" || corps !== ALL || category !== ALL || region !== ALL;
+  // The benefits the chat agent's last answer named. Null when the catalogue is not narrowed to an answer.
+  const [picked, setPicked] = React.useState<ReadonlySet<string> | null>(null);
+  const filtered = picked !== null || query !== "" || corps !== ALL || category !== ALL || region !== ALL;
   const clearFilters = () => {
+    setPicked(null);
     setQuery("");
     chooseCorps(ALL);
     setCategory(ALL);
@@ -112,6 +123,7 @@ function Catalogue() {
     .filter(
       (benefit) =>
         (view === "catalogo" || saved.has(benefit.id)) &&
+        (picked === null || picked.has(benefit.id)) &&
         (corps === ALL || appliesTo(benefit.corps, corps as Corps)) &&
         (category === ALL || benefit.category === category) &&
         (region === ALL || benefit.region === region) &&
@@ -140,21 +152,29 @@ function Catalogue() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col gap-5 px-4 pt-4 pb-24 sm:px-6 sm:pt-5 lg:px-8">
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-        <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Benefit Radar</h1>
-        <div className="order-last w-full sm:order-none sm:w-auto">
-          <SegmentedControl
-            aria-label="Vista"
-            value={view}
-            onValueChange={(value) => setView(value ?? "catalogo")}
-            className="flex w-full sm:inline-flex sm:w-auto"
-          >
-            <SegmentedControlIndicator />
-            <SegmentedControlItem value="catalogo">Catalogo</SegmentedControlItem>
-            <SegmentedControlItem value="salvati">Salvati</SegmentedControlItem>
-          </SegmentedControl>
-        </div>
-        <div className="flex items-center gap-4">
+      <header className="flex items-center gap-x-6 gap-y-3">
+        <h1 className="flex min-w-0 items-center gap-2.5 text-lg font-bold tracking-tight sm:text-xl">
+          <Logo className="h-6 w-auto shrink-0 sm:h-7" />
+          <span className="truncate">Benefici per l'Arme</span>
+        </h1>
+        {/* One control, placed by CSS: a bar along the bottom on a phone, inline after the logo on a wide screen. */}
+        <SegmentedControl
+          aria-label="Vista"
+          value={view}
+          onValueChange={(value) => setView(value ?? "catalogo")}
+          className="fixed bottom-0 left-0 z-30 flex w-2/3 gap-0 border-x-0 border-b-0 bg-background p-0 pb-[env(safe-area-inset-bottom)] md:relative md:inset-auto md:z-auto md:inline-flex md:w-auto md:gap-0.5 md:border md:bg-transparent md:p-0.5"
+        >
+          <SegmentedControlIndicator />
+          <SegmentedControlItem value="catalogo" className="h-14 flex-col gap-0.5 text-xs md:h-9 md:flex-row md:gap-2 md:text-sm">
+            <GridIcon />
+            Catalogo
+          </SegmentedControlItem>
+          <SegmentedControlItem value="salvati" className="h-14 flex-col gap-0.5 text-xs md:h-9 md:flex-row md:gap-2 md:text-sm">
+            <BookmarkIcon filled={view === "salvati"} />
+            Salvati
+          </SegmentedControlItem>
+        </SegmentedControl>
+        <div className="ml-auto flex shrink-0 items-center gap-4">
           {admin && (
             <Link to="/admin" className="text-sm">
               Admin
@@ -178,9 +198,14 @@ function Catalogue() {
         <FilterSelect label="Regione" value={region} options={regionOptions} onChange={setRegion} />
         <FilterSelect label="Ordina per" value={sort} options={SORTS} onChange={(value) => setSort(value as Sort)} />
         {filtered && (
-          <Button onClick={clearFilters} className="col-span-2 h-10 lg:col-span-5 lg:justify-self-start">
-            Azzera filtri
-          </Button>
+          <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 lg:col-span-5">
+            <Button onClick={clearFilters} className="h-10 w-full sm:w-auto">
+              Azzera filtri
+            </Button>
+            {picked !== null && (
+              <p className="text-sm text-muted-foreground">Stai vedendo i benefit citati nell'ultima risposta.</p>
+            )}
+          </div>
         )}
       </div>
 
@@ -203,7 +228,7 @@ function Catalogue() {
               <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
                 {group.items.map((benefit) => (
                   <li key={benefit.id}>
-                    <BenefitCard benefit={benefit} saved={saved.has(benefit.id)} onOpen={setSelected} onSave={save} />
+                    <BenefitCard benefit={benefit} saved={saved.has(benefit.id)} onOpen={open} onSave={save} />
                   </li>
                 ))}
               </ul>
@@ -219,10 +244,10 @@ function Catalogue() {
       <BenefitDialog
         benefit={selected}
         saved={selected !== null && saved.has(selected.id)}
-        onClose={() => setSelected(null)}
+        onClose={() => open(null)}
         onSave={save}
       />
-      <Chat signedIn={signedIn} onSignIn={signIn} questions={questions} remaining={remaining} />
+      <Chat signedIn={signedIn} onSignIn={signIn} onShow={(ids) => setPicked(new Set(ids))} questions={questions} remaining={remaining} />
     </div>
   );
 }
