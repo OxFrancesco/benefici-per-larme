@@ -2,3 +2,86 @@
 
 @import "tailwindcss";
 @import "@ui-sdk/core/web.css" layer(components);
+
+@theme inline {
+  --color-background: var(--ui-background);
+  --color-foreground: var(--ui-foreground);
+  --color-muted: var(--ui-muted);
+  --color-muted-foreground: var(--ui-muted-foreground);
+  --color-border: var(--ui-border);
+  --color-primary: var(--ui-primary);
+  --color-primary-foreground: var(--ui-primary-foreground);
+  --font-sans: var(--ui-font-sans);
+  --font-mono: var(--ui-font-mono);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+:root {
+  color-scheme: dark;
+  --ui-background: oklch(0% 0 0);
+  --ui-foreground: oklch(100% 0 0);
+  --ui-muted: oklch(22.46% 0.0094 107.134);
+  --ui-muted-foreground: oklch(74% 0 0);
+  --ui-border: oklch(25.2% 0 0);
+  --ui-input: oklch(52% 0 0);
+  --ui-primary: oklch(61.52% 0.1657 26.98);
+  --ui-primary-foreground: oklch(0% 0 0);
+  --ui-ring: oklch(61.52% 0.1657 26.98);
+  --ui-ring-border: oklch(61.52% 0.1657 26.98);
+  --ui-radius: 0;
+  --ui-font-size: 0.875rem;
+  --ui-font-sans: "Chakra Petch", ui-sans-serif, system-ui, sans-serif;
+  --ui-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+body {
+  background: var(--ui-background);
+  color: var(--ui-foreground);
+  font-family: var(--ui-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-slot="button"][data-variant="solid"] {
+  font-weight: 700;
+}
+
+[data-slot="segmented-control"] {
+  background: transparent;
+}
+
+[data-slot="segmented-control-indicator"] {
+  border-color: var(--ui-primary);
+  background: var(--ui-primary);
+  transition:
+    left 0.2s var(--ease-out),
+    width 0.2s var(--ease-out);
+}
+
+[data-slot="segmented-control-item"][data-checked] {
+  color: var(--ui-primary-foreground);
+  font-weight: 700;
+}
+
+[data-slot="segmented-control-item"] {
+  height: calc(var(--ui-spacing) * 9);
+}
+
+/* Filters and the chat field are tap targets on a phone. */
+:is([data-slot="select-trigger"], [data-slot="input"]) {
+  height: calc(var(--ui-spacing) * 10);
+}
+
+[data-slot="timeline-item"] {
+  transition: opacity 0.2s var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="segmented-control-indicator"],
+  [data-slot="timeline-item"] {
+    transition: none;
+  }
+}
