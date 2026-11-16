@@ -45,15 +45,15 @@ body {
   font-weight: 700;
 }
 
-[data-slot="segmented-control-indicator"] {
-  border-color: var(--ui-primary);
-  background: var(--ui-primary);
+/* The checked item carries its own fill. A measured indicator goes stale when the bar is resized or rotated. */
+[data-slot="segmented-control-item"] {
   transition:
-    left 0.2s var(--ease-out),
-    width 0.2s var(--ease-out);
+    background-color 0.15s var(--ease-out),
+    color 0.15s var(--ease-out);
 }
 
 [data-slot="segmented-control-item"][data-checked] {
+  background: var(--ui-primary);
   color: var(--ui-primary-foreground);
   font-weight: 700;
 }
@@ -72,7 +72,7 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="segmented-control-indicator"],
+  [data-slot="segmented-control-item"],
   [data-slot="timeline-item"] {
     transition: none;
   }

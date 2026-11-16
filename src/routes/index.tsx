@@ -2,12 +2,12 @@ import { UserButton, useClerk } from "@clerk/tanstack-react-start";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Button } from "@ui-sdk/react/button";
 import { Input } from "@ui-sdk/react/input";
-import { SegmentedControl, SegmentedControlIndicator, SegmentedControlItem } from "@ui-sdk/react/segmented-control";
+import { SegmentedControl, SegmentedControlItem } from "@ui-sdk/react/segmented-control";
 import * as React from "react";
 import { BenefitCard } from "../components/benefit-card.tsx";
 import { BenefitDialog } from "../components/benefit-dialog.tsx";
-import { Chat } from "../components/chat.tsx";
-import { BookmarkIcon, GridIcon } from "../components/icons.tsx";
+import { ChatPanel, ChatPopover, useChat } from "../components/chat.tsx";
+import { BookmarkIcon, ChatIcon, GridIcon } from "../components/icons.tsx";
 import { Logo } from "../components/logo.tsx";
 import { FilterSelect, type Option } from "../components/filter-select.tsx";
 import { type Benefit, CATEGORIES, CORPS, type Corps, appliesTo } from "../domain.ts";
@@ -118,11 +118,14 @@ function Catalogue() {
       .map((name) => ({ value: name, label: name })),
   ];
 
+  const chat = useChat(questions, remaining, (ids) => setPicked(new Set(ids)));
+  const asking = view === "chiedi";
+
   const needle = query.trim().toLowerCase();
   const visible = benefits
     .filter(
       (benefit) =>
-        (view === "catalogo" || saved.has(benefit.id)) &&
+        (view !== "salvati" || saved.has(benefit.id)) &&
         (picked === null || picked.has(benefit.id)) &&
         (corps === ALL || appliesTo(benefit.corps, corps as Corps)) &&
         (category === ALL || benefit.category === category) &&
@@ -153,7 +156,7 @@ function Catalogue() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-7xl flex-col gap-5 px-4 pt-4 pb-24 sm:px-6 sm:pt-5 lg:px-8">
       <header className="flex items-center gap-x-6 gap-y-3">
-        <h1 className="flex min-w-0 items-center gap-2.5 text-lg font-bold tracking-tight sm:text-xl">
+        <h1 className="flex min-w-0 items-center gap-2.5 text-base font-bold tracking-tight sm:text-xl">
           <Logo className="h-6 w-auto shrink-0 sm:h-7" />
           <span className="truncate">Benefici per l'Arme</span>
         </h1>
@@ -162,9 +165,8 @@ function Catalogue() {
           aria-label="Vista"
           value={view}
           onValueChange={(value) => setView(value ?? "catalogo")}
-          className="fixed bottom-0 left-0 z-30 flex w-2/3 gap-0 border-x-0 border-b-0 bg-background p-0 pb-[env(safe-area-inset-bottom)] md:relative md:inset-auto md:z-auto md:inline-flex md:w-auto md:gap-0.5 md:border md:bg-transparent md:p-0.5"
+          className="fixed inset-x-0 bottom-0 z-30 flex gap-0 border-x-0 border-b-0 bg-background p-0 pb-[env(safe-area-inset-bottom)] md:relative md:inset-auto md:z-auto md:inline-flex md:gap-0.5 md:border md:bg-transparent md:p-0.5"
         >
-          <SegmentedControlIndicator />
           <SegmentedControlItem value="catalogo" className="h-14 flex-col gap-0.5 text-xs md:h-9 md:flex-row md:gap-2 md:text-sm">
             <GridIcon />
             Catalogo
@@ -172,6 +174,11 @@ function Catalogue() {
           <SegmentedControlItem value="salvati" className="h-14 flex-col gap-0.5 text-xs md:h-9 md:flex-row md:gap-2 md:text-sm">
             <BookmarkIcon filled={view === "salvati"} />
             Salvati
+          </SegmentedControlItem>
+          {/* On a phone the chat is a page of its own. On a wide screen it is the button bottom right. */}
+          <SegmentedControlItem value="chiedi" className="h-14 flex-col gap-0.5 text-xs md:hidden">
+            <ChatIcon />
+            Chiedi
           </SegmentedControlItem>
         </SegmentedControl>
         <div className="ml-auto flex shrink-0 items-center gap-4">
@@ -184,61 +191,73 @@ function Catalogue() {
         </div>
       </header>
 
-      <div className="grid grid-cols-2 gap-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]">
-        <Input
-          type="search"
-          aria-label="Cerca nel catalogo"
-          placeholder="Cerca per nome, ente o città"
-          value={query}
-          onValueChange={setQuery}
-          className="col-span-2 text-base lg:col-span-1 lg:text-sm"
-        />
-        <FilterSelect label="Il mio reparto" value={corps} options={CORPS_OPTIONS} onChange={chooseCorps} />
-        <FilterSelect label="Categoria" value={category} options={categoryOptions} onChange={setCategory} />
-        <FilterSelect label="Regione" value={region} options={regionOptions} onChange={setRegion} />
-        <FilterSelect label="Ordina per" value={sort} options={SORTS} onChange={(value) => setSort(value as Sort)} />
-        {filtered && (
-          <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 lg:col-span-5">
-            <Button onClick={clearFilters} className="h-10 w-full sm:w-auto">
-              Azzera filtri
-            </Button>
-            {picked !== null && (
-              <p className="text-sm text-muted-foreground">Stai vedendo i benefit citati nell'ultima risposta.</p>
-            )}
-          </div>
+      {/* The catalogue stays mounted behind the phone chat page, so an answer can still set its filters. */}
+      <div className={asking ? "hidden flex-col gap-5 md:flex" : "flex flex-col gap-5"}>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]">
+          <Input
+            type="search"
+            aria-label="Cerca nel catalogo"
+            placeholder="Cerca per nome, ente o città"
+            value={query}
+            onValueChange={setQuery}
+            className="col-span-2 text-base lg:col-span-1 lg:text-sm"
+          />
+          <FilterSelect label="Il mio reparto" value={corps} options={CORPS_OPTIONS} onChange={chooseCorps} />
+          <FilterSelect label="Categoria" value={category} options={categoryOptions} onChange={setCategory} />
+          <FilterSelect label="Regione" value={region} options={regionOptions} onChange={setRegion} />
+          <FilterSelect label="Ordina per" value={sort} options={SORTS} onChange={(value) => setSort(value as Sort)} />
+          {filtered && (
+            <div className="col-span-2 flex flex-wrap items-center gap-x-4 gap-y-2 lg:col-span-5">
+              <Button onClick={clearFilters} className="h-10 w-full sm:w-auto">
+                Azzera filtri
+              </Button>
+              {picked !== null && (
+                <p className="text-sm text-muted-foreground">Stai vedendo i benefit citati nell'ultima risposta.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <main className="flex flex-col gap-8">
+          {visible.length === 0 ? (
+            <div className="flex flex-col items-start gap-4 border border-border p-6 sm:p-8">
+              <p className="text-muted-foreground">{empty}</p>
+              {view === "salvati" && !signedIn ? (
+                <Button data-variant="solid" onClick={signIn}>
+                  Accedi
+                </Button>
+              ) : (
+                filtered && <Button onClick={clearFilters}>Azzera filtri</Button>
+              )}
+            </div>
+          ) : (
+            groups.map((group) => (
+              <section key={group.name ?? "all"} className="flex flex-col gap-3">
+                {group.name !== null && <h2 className="text-lg font-bold">{group.name}</h2>}
+                <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                  {group.items.map((benefit) => (
+                    <li key={benefit.id}>
+                      <BenefitCard benefit={benefit} saved={saved.has(benefit.id)} onOpen={open} onSave={save} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          )}
+        </main>
+
+        {updatedAt !== null && (
+          <p className="font-mono text-xs text-muted-foreground">Catalogo aggiornato il {formatDateTime(updatedAt)}</p>
         )}
       </div>
 
-      <main className="flex flex-col gap-8">
-        {visible.length === 0 ? (
-          <div className="flex flex-col items-start gap-4 border border-border p-6 sm:p-8">
-            <p className="text-muted-foreground">{empty}</p>
-            {view === "salvati" && !signedIn ? (
-              <Button data-variant="solid" onClick={signIn}>
-                Accedi
-              </Button>
-            ) : (
-              filtered && <Button onClick={clearFilters}>Azzera filtri</Button>
-            )}
-          </div>
-        ) : (
-          groups.map((group) => (
-            <section key={group.name ?? "all"} className="flex flex-col gap-3">
-              {group.name !== null && <h2 className="text-lg font-bold">{group.name}</h2>}
-              <ul className="grid gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-                {group.items.map((benefit) => (
-                  <li key={benefit.id}>
-                    <BenefitCard benefit={benefit} saved={saved.has(benefit.id)} onOpen={open} onSave={save} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
-        )}
-      </main>
-
-      {updatedAt !== null && (
-        <p className="font-mono text-xs text-muted-foreground">Catalogo aggiornato il {formatDateTime(updatedAt)}</p>
+      {asking && (
+        <section
+          aria-label="Chiedi all'agente"
+          className="-mx-4 -mb-24 flex h-[calc(100dvh-8.25rem-env(safe-area-inset-bottom))] flex-col border-t border-border md:hidden"
+        >
+          <ChatPanel chat={chat} signedIn={signedIn} onSignIn={signIn} onOpenCatalogue={() => setView("catalogo")} />
+        </section>
       )}
 
       <BenefitDialog
@@ -247,7 +266,9 @@ function Catalogue() {
         onClose={() => open(null)}
         onSave={save}
       />
-      <Chat signedIn={signedIn} onSignIn={signIn} onShow={(ids) => setPicked(new Set(ids))} questions={questions} remaining={remaining} />
+      <ChatPopover>
+        <ChatPanel chat={chat} signedIn={signedIn} onSignIn={signIn} />
+      </ChatPopover>
     </div>
   );
 }
