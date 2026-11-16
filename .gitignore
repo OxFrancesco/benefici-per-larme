@@ -1,0 +1,10 @@
+
+# codeview reference codebases
+resources/
+node_modules/
+dist/
+.output/
+.alchemy/
+.wrangler/
+.env*
+.dev.vars
